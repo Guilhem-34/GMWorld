@@ -96,7 +96,7 @@ Mise en place de l'environnement et structure du projet — le code démarre en 
 
 
 
-Fait avec \[Qt](https://www.qt.io/) et pas mal de café ☕ — par \[Guilhem-34](https://github.com/Guilhem-34)
+Fait avec \[Qt](https://www.qt.io/) et un peu de café ☕ — par \[Guilhem-34](https://github.com/Guilhem-34)
 
 
 

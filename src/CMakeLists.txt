@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.16)
 
 project(src VERSION 0.1 LANGUAGES CXX)
+include(FetchContent)
+FetchContent_Declare(
+    sgp4
+    GIT_REPOSITORY https://github.com/dnwrnr/sgp4.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(sgp4)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -43,6 +50,8 @@ else()
 endif()
 
 target_link_libraries(src PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+add_executable(sgp4_console_test sgp4_test.cpp)
+target_link_libraries(sgp4_console_test PRIVATE SGP4::sgp4)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

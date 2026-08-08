@@ -12,6 +12,11 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    mapWidget = new MapWidget(this);
+    mapWidget->setGeometry(20, 80, 500, 260);
+    resize(560, 380);
+
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::updatePosition);
     timer->start(2000); // toutes les 2 secondes
@@ -40,4 +45,6 @@ void MainWindow::updatePosition()
                         .arg(geo.altitude, 0, 'f', 1);
 
     ui->labelPosition->setText(texte);
+    mapWidget->setPosition(libsgp4::Util::RadiansToDegrees(geo.latitude),
+                           libsgp4::Util::RadiansToDegrees(geo.longitude));
 }

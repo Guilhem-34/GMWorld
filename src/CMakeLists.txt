@@ -30,6 +30,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(src
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
+        mapwidget.h mapwidget.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET src APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

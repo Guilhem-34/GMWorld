@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include "mapwidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -24,5 +25,6 @@ private slots:
 private:
     Ui::MainWindow *ui;
     QTimer *timer;
+    MapWidget *mapWidget;
 };
 #endif // MAINWINDOW_H

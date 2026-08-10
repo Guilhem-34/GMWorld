@@ -5,6 +5,8 @@
 #include <QTimer>
 #include <QNetworkAccessManager>
 #include<QNetworkReply>
+#include <QListWidget>
+#include <QSystemTrayIcon>
 #include "mapwidget.h"
 #include "radarwidget.h"
 
@@ -36,5 +38,9 @@ private:
     QString currentTleLine1 = "1 25544U 98067A   26220.50489838  .00004539  00000+0  89319-4 0  9991";
     QString currentTleLine2 = "2 25544  51.6323  41.1734 0007358  25.6275 334.5077 15.49385107579869";
     void fetchTle();
+    QListWidget *passesListWidget;
+    QSystemTrayIcon *trayIcon;
+    double previousElevation = -90.0;
+    void refreshPassesList();
 };
 #endif // MAINWINDOW_H

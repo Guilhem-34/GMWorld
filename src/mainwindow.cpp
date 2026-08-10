@@ -11,6 +11,7 @@
 #include <QDebug>
 #include <libsgp4/Observer.h>
 #include <libsgp4/CoordTopocentric.h>
+#include <QStyle>
 
 //exemple position near my location
 const double OBSERVER_LATITUDE = 43.3615;
@@ -31,6 +32,13 @@ MainWindow::MainWindow(QWidget *parent)
     fetchTle();
     radarWidget = new RadarWidget(this);
     radarWidget->setGeometry(540, 10, 260, 260);
+    passesListWidget = new QListWidget(this);
+    passesListWidget->setGeometry(20, 350, 780, 150);
+    resize(820, 520);
+    trayIcon = new QSystemTrayIcon(this);
+    trayIcon->setIcon(style()->standardIcon(QStyle::SP_ComputerIcon));
+    trayIcon->show();
+    refreshPassesList();
     resize(820, 380);
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::updatePosition);
@@ -55,10 +63,17 @@ void MainWindow::updatePosition()
     libsgp4::CoordGeodetic geo = position.ToGeodetic();
     libsgp4::Observer observer(OBSERVER_LATITUDE, OBSERVER_LONGITUDE, OBSERVER_ALTITUDE_KM);
     libsgp4::CoordTopocentric lookAngle = observer.GetLookAngle(position);
-    radarWidget->setLookAngle(
-        libsgp4::Util::RadiansToDegrees(lookAngle.azimuth),
-        libsgp4::Util::RadiansToDegrees(lookAngle.elevation)
-        );
+    double azimuthDeg = libsgp4::Util::RadiansToDegrees(lookAngle.azimuth);
+    double elevationDeg = libsgp4::Util::RadiansToDegrees(lookAngle.elevation);
+
+    radarWidget->setLookAngle(azimuthDeg, elevationDeg);
+
+    if (previousElevation <= 0 && elevationDeg > 0) {
+        trayIcon->showMessage("ISS visible !",
+                              "L'ISS vient de passer au-dessus de l'horizon.",
+                              QSystemTrayIcon::Information, 5000);
+    }
+    previousElevation = elevationDeg;
 
     QString texte = QString("Latitude : %1°\nLongitude : %2°\nAltitude : %3 km")
                         .arg(libsgp4::Util::RadiansToDegrees(geo.latitude), 0, 'f', 2)
@@ -92,8 +107,50 @@ void MainWindow::onTleReplyFinished(QNetworkReply *reply)
         currentTleName = lines[0].trimmed();
         currentTleLine1 = lines[1].trimmed();
         currentTleLine2 = lines[2].trimmed();
+        refreshPassesList();
         qDebug() << "TLE recupere :" << currentTleName;
     }
 
     reply->deleteLater();
+}
+
+void MainWindow::refreshPassesList()
+{
+    libsgp4::Tle tle(currentTleName.toStdString(), currentTleLine1.toStdString(), currentTleLine2.toStdString());
+    libsgp4::SGP4 sgp4(tle);
+    libsgp4::Observer observer(OBSERVER_LATITUDE, OBSERVER_LONGITUDE, OBSERVER_ALTITUDE_KM);
+
+    passesListWidget->clear();
+
+    libsgp4::DateTime t = libsgp4::DateTime::Now();
+    libsgp4::DateTime end = t.AddHours(48);
+
+    bool inPass = false;
+    libsgp4::DateTime passStart;
+    double maxElev = 0.0;
+    int count = 0;
+
+    while (t < end && count < 10) {
+        libsgp4::Eci eci = sgp4.FindPosition(t);
+        libsgp4::CoordTopocentric look = observer.GetLookAngle(eci);
+        double elevDeg = libsgp4::Util::RadiansToDegrees(look.elevation);
+
+        if (!inPass && elevDeg > 0) {
+            inPass = true;
+            passStart = t;
+            maxElev = elevDeg;
+        } else if (inPass) {
+            if (elevDeg > maxElev) maxElev = elevDeg;
+            if (elevDeg <= 0) {
+                inPass = false;
+                QString line = QString("%1  ->  %2   (max %3°)")
+                                   .arg(QString::fromStdString(passStart.ToString()))
+                                   .arg(QString::fromStdString(t.ToString()))
+                                   .arg(maxElev, 0, 'f', 1);
+                passesListWidget->addItem(line);
+                count++;
+            }
+        }
+        t = t.AddSeconds(30);
+    }
 }

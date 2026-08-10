@@ -9,6 +9,10 @@
 #include <QSystemTrayIcon>
 #include "mapwidget.h"
 #include "radarwidget.h"
+#include <QChartView>
+#include <QLineSeries>
+#include <QValueAxis>
+#include <QDateTimeAxis>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -42,5 +46,10 @@ private:
     QSystemTrayIcon *trayIcon;
     double previousElevation = -90.0;
     void refreshPassesList();
+    QChartView *chartView;
+    QChart *chart;
+    QLineSeries *altitudeSeries;
+    QDateTimeAxis *axisX;
+    QValueAxis *axisY;
 };
 #endif // MAINWINDOW_H

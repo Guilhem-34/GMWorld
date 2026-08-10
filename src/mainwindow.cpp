@@ -12,6 +12,7 @@
 #include <libsgp4/Observer.h>
 #include <libsgp4/CoordTopocentric.h>
 #include <QStyle>
+#include <QDateTime>
 
 //exemple position near my location
 const double OBSERVER_LATITUDE = 43.3615;
@@ -35,6 +36,28 @@ MainWindow::MainWindow(QWidget *parent)
     passesListWidget = new QListWidget(this);
     passesListWidget->setGeometry(20, 350, 780, 150);
     resize(820, 520);
+    altitudeSeries = new QLineSeries();
+    altitudeSeries->setName("Altitude (km)");
+
+    chart = new QChart();
+    chart->addSeries(altitudeSeries);
+    chart->legend()->hide();
+
+    axisX = new QDateTimeAxis();
+    axisX->setFormat("hh:mm:ss");
+    axisX->setTitleText("Heure");
+    chart->addAxis(axisX, Qt::AlignBottom);
+    altitudeSeries->attachAxis(axisX);
+
+    axisY = new QValueAxis();
+    axisY->setTitleText("Altitude (km)");
+    axisY->setRange(390, 430); // plage typique de l'ISS, ajuste si besoin
+    chart->addAxis(axisY, Qt::AlignLeft);
+    altitudeSeries->attachAxis(axisY);
+
+    chartView = new QChartView(chart, this);
+    chartView->setGeometry(20, 510, 780, 200);
+    resize(820, 740);
     trayIcon = new QSystemTrayIcon(this);
     trayIcon->setIcon(style()->standardIcon(QStyle::SP_ComputerIcon));
     trayIcon->show();
@@ -61,6 +84,18 @@ void MainWindow::updatePosition()
     libsgp4::SGP4 sgp4(tle);
     libsgp4::Eci position = sgp4.FindPosition(libsgp4::DateTime::Now());
     libsgp4::CoordGeodetic geo = position.ToGeodetic();
+    qint64 maintenantMs = QDateTime::currentMSecsSinceEpoch();
+    altitudeSeries->append(maintenantMs, geo.altitude);
+
+    if (altitudeSeries->count() > 60) {
+        altitudeSeries->remove(0); // garde seulement les 60 derniers points (~2 minutes)
+    }
+
+    if (altitudeSeries->count() > 1) {
+        qint64 premierX = altitudeSeries->at(0).x();
+        qint64 dernierX = altitudeSeries->at(altitudeSeries->count() - 1).x();
+        axisX->setRange(QDateTime::fromMSecsSinceEpoch(premierX), QDateTime::fromMSecsSinceEpoch(dernierX));
+    }
     libsgp4::Observer observer(OBSERVER_LATITUDE, OBSERVER_LONGITUDE, OBSERVER_ALTITUDE_KM);
     libsgp4::CoordTopocentric lookAngle = observer.GetLookAngle(position);
     double azimuthDeg = libsgp4::Util::RadiansToDegrees(lookAngle.azimuth);

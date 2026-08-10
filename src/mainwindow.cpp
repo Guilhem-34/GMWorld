@@ -6,6 +6,9 @@
 #include <libsgp4/CoordGeodetic.h>
 #include <libsgp4/DateTime.h>
 #include <libsgp4/Util.h>
+#include <QUrl>
+#include <QNetworkRequest>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -16,7 +19,9 @@ MainWindow::MainWindow(QWidget *parent)
     mapWidget = new MapWidget(this);
     mapWidget->setGeometry(20, 80, 500, 260);
     resize(560, 380);
-
+    networkManager = new QNetworkAccessManager(this);
+    connect(networkManager, &QNetworkAccessManager::finished, this, &MainWindow::onTleReplyFinished);
+    fetchTle();
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &MainWindow::updatePosition);
     timer->start(2000); // toutes les 2 secondes
@@ -31,9 +36,9 @@ MainWindow::~MainWindow()
 void MainWindow::updatePosition()
 {
     libsgp4::Tle tle(
-        "ISS (ZARYA)",
-        "1 25544U 98067A   26220.50489838  .00004539  00000+0  89319-4 0  9991",
-        "2 25544  51.6323  41.1734 0007358  25.6275 334.5077 15.49385107579869"
+        currentTleName.toStdString(),
+        currentTleLine1.toStdString(),
+        currentTleLine2.toStdString()
         );
     libsgp4::SGP4 sgp4(tle);
     libsgp4::Eci position = sgp4.FindPosition(libsgp4::DateTime::Now());
@@ -44,7 +49,35 @@ void MainWindow::updatePosition()
                         .arg(libsgp4::Util::RadiansToDegrees(geo.longitude), 0, 'f', 2)
                         .arg(geo.altitude, 0, 'f', 1);
 
+    ui->labelPosition->setGeometry(20, 10, 500, 60);
     ui->labelPosition->setText(texte);
     mapWidget->setPosition(libsgp4::Util::RadiansToDegrees(geo.latitude),
                            libsgp4::Util::RadiansToDegrees(geo.longitude));
+}
+
+void MainWindow::fetchTle()
+{
+    QUrl url("https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle");
+    networkManager->get(QNetworkRequest(url));
+}
+
+void MainWindow::onTleReplyFinished(QNetworkReply *reply)
+{
+    if (reply->error() != QNetworkReply::NoError) {
+        qDebug() << "Erreur reseau :" << reply->errorString();
+        reply->deleteLater();
+        return;
+    }
+
+    QString data = QString::fromUtf8(reply->readAll());
+    QStringList lines = data.split('\n', Qt::SkipEmptyParts);
+
+    if (lines.size() >= 3) {
+        currentTleName = lines[0].trimmed();
+        currentTleLine1 = lines[1].trimmed();
+        currentTleLine2 = lines[2].trimmed();
+        qDebug() << "TLE recupere :" << currentTleName;
+    }
+
+    reply->deleteLater();
 }

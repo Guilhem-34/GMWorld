@@ -6,6 +6,7 @@
 #include <QNetworkAccessManager>
 #include<QNetworkReply>
 #include "mapwidget.h"
+#include "radarwidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -30,6 +31,7 @@ private:
     QTimer *timer;
     MapWidget *mapWidget;
     QNetworkAccessManager *networkManager;
+    RadarWidget *radarWidget;
     QString currentTleName = "ISS (ZARYA)";
     QString currentTleLine1 = "1 25544U 98067A   26220.50489838  .00004539  00000+0  89319-4 0  9991";
     QString currentTleLine2 = "2 25544  51.6323  41.1734 0007358  25.6275 334.5077 15.49385107579869";

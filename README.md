@@ -25,7 +25,7 @@ Git/GitHub en même temps, construit progressivement phase par phase.
 ## Roadmap
 
 - [x] **Phase 1 — Tracker logiciel** : lecture de TLE, calcul de position (SGP4), affichage sur une carte
-- [ ] **Phase 2 — UI avancée** : vue radar azimut/élévation, notifications, graphiques
+- [x] **Phase 2 — UI avancée** : vue radar azimut/élévation, notifications, graphiques
 - [ ] **Phase 3 — Rotateur d'antenne** : 2 moteurs pas-à-pas + ESP32, piloté depuis l'appli
 - [ ] **Phase 4 — Réception SDR** : réception réelle de signaux satellite (RTL-SDR)
 - [ ] **Phase 5 — Mission Control** : dashboard complet, historique, visu 3D
